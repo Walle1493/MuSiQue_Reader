@@ -44,6 +44,7 @@ from transformers import (WEIGHTS_NAME, BertConfig,
                                   DistilBertConfig, DistilBertForQuestionAnswering, DistilBertTokenizer,
                                   AlbertConfig, AlbertForQuestionAnswering, AlbertTokenizer,
                                   XLMConfig, XLMForQuestionAnswering, XLMTokenizer,
+                                  DebertaV2Config, DebertaV2ForQuestionAnswering, DebertaV2Tokenizer,
                                   )
 
 # from transformers.data.processors.squad import SquadV1Processor, SquadV2Processor, SquadResult
@@ -79,6 +80,7 @@ MODEL_CLASSES = {
     'xlm': (XLMConfig, XLMForQuestionAnswering, XLMTokenizer),
     'distilbert': (DistilBertConfig, DistilBertForQuestionAnswering, DistilBertTokenizer),
     'albert': (AlbertConfig, AlbertForQuestionAnswering, AlbertTokenizer),
+    'deberta': (DebertaV2Config, DebertaV2ForQuestionAnswering, DebertaV2Tokenizer),
 }
 
 def set_seed(args):
