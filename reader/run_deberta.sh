@@ -1,7 +1,9 @@
 # export DATA_DIR=/home/mxdong/Data/MuSiQue/single_hop_short
-export DATA_DIR=/home/mxdong/Data/MuSiQue/single_hop_data
+# export DATA_DIR=/home/mxdong/Data/MuSiQue/single_hop_data
+export DATA_DIR=/home/mxdong/Data/MuSiQue/single_hop_title
 
-export TASK_NAME=MuSiQue
+# export TASK_NAME=MuSiQue
+export TASK_NAME=MuSiQue_Title
 export MODEL_NAME=microsoft/deberta-v3-large
 export OUTPUT_DIR=/home/mxdong/Model/Reader/${TASK_NAME}/${MODEL_NAME}
 
@@ -25,8 +27,9 @@ CUDA_VISIBLE_DEVICES=2 python run_musique.py \
     --gradient_accumulation_steps 1 \
     --learning_rate 1e-5 \
     --num_train_epochs 3.0 \
-    --logging_steps 400 \
-    --save_steps 4000 \
+    --logging_steps 2000 \
+    --save_steps 2000 \
     --adam_epsilon 1e-8 \
     --warmup_steps 300 \
     --overwrite_output_dir \
+    --evaluate_during_training \
