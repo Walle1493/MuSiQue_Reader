@@ -20,8 +20,8 @@ if __name__ == "__main__":
 
     mode = sys.argv[1]  # train or dev
 
-    src_path = "/home/mxdong/Data/MuSiQue/single_hop_data"
-    dest_path = "/home/mxdong/Data/MuSiQue/single_hop_short"
+    src_path = "/home/mxdong/Data/MuSiQue/multi_choice_title"
+    dest_path = "/home/mxdong/Data/MuSiQue/multi_choice_short"
 
     if not os.path.exists(dest_path):
         os.mkdir(dest_path)

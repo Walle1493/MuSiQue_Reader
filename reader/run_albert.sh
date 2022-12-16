@@ -1,7 +1,9 @@
 # export DATA_DIR=/home/mxdong/Data/MuSiQue/single_hop_short
-export DATA_DIR=/home/mxdong/Data/MuSiQue/single_hop_data
+# export DATA_DIR=/home/mxdong/Data/MuSiQue/single_hop_data
+export DATA_DIR=/home/mxdong/Data/MuSiQue/single_hop_title
 
-export TASK_NAME=MuSiQue
+# export TASK_NAME=MuSiQue
+export TASK_NAME=MuSiQue_Title
 export MODEL_NAME=albert-xxlarge-v2
 export OUTPUT_DIR=/home/mxdong/Model/Reader/${TASK_NAME}/${MODEL_NAME}
 

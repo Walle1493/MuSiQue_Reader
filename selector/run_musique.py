@@ -49,31 +49,11 @@ from transformers import (WEIGHTS_NAME, BertConfig,
 
 from utils import (
     MusiqueProcessor,
-    _2WikiProcessor,
+    WikiProcessor,
     HotpotqaProcessor,
     convert_examples_to_features
 )
 
-# from transformers.data.processors.squad import SquadV1Processor, SquadV2Processor, SquadResult
-# from transformers import squad_convert_examples_to_features
-# from musique_processor import (
-#     MusiqueProcessor,
-#     musique_convert_examples_to_features,
-#     MusiqueResult,
-# )
-
-# from transformers.data.metrics.squad_metrics import (
-#     compute_predictions_logits, 
-#     compute_predictions_log_probs, 
-#     squad_evaluate)
-# from examples.evaluate_official2 import eval_squad
-# from musique_metrics import (
-#     compute_predictions_logits,
-#     compute_predictions_log_probs,
-#     # read_target_dict,
-#     musique_evaluate,
-#     musique_evaluate_2,
-# )
 
 logger = logging.getLogger(__name__)
 
@@ -82,16 +62,13 @@ logger = logging.getLogger(__name__)
 # from transformers import MODEL_FOR_QUESTION_ANSWERING_MAPPING
 # ALL_MODELS = list(MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys())
 MODEL_CLASSES = {
-    'bert': (BertConfig, BertForQuestionAnswering, BertTokenizer),
-    'xlnet': (XLNetConfig, XLNetForQuestionAnswering, XLNetTokenizer),
-    'xlm': (XLMConfig, XLMForQuestionAnswering, XLMTokenizer),
-    'distilbert': (DistilBertConfig, DistilBertForQuestionAnswering, DistilBertTokenizer),
-    'albert': (AlbertConfig, AlbertForQuestionAnswering, AlbertTokenizer),
-    'deberta': (DebertaV2Config, DebertaV2ForQuestionAnswering, DebertaV2Tokenizer),
+    'bert': (BertConfig, BertForMultipleChoice, BertTokenizer),
+    'xlnet': (XLNetConfig, XLNetForMultipleChoice, XLNetTokenizer),
+    'xlm': (XLMConfig, XLMForMultipleChoice, XLMTokenizer),
+    'distilbert': (DistilBertConfig, DistilBertForMultipleChoice, DistilBertTokenizer),
+    'albert': (AlbertConfig, AlbertForMultipleChoice, AlbertTokenizer),
+    'deberta': (DebertaV2Config, DebertaV2ForMultipleChoice, DebertaV2Tokenizer),
 }
-
-def select_field(features, field):
-    return [[choice[field] for choice in feature.choices_features] for feature in features]
 
 def simple_accuracy(preds, labels):
     return (preds == labels).mean()
@@ -102,9 +79,6 @@ def set_seed(args):
     torch.manual_seed(args.seed)
     if args.n_gpu > 0:
         torch.cuda.manual_seed_all(args.seed)
-
-def to_list(tensor):
-    return tensor.detach().cpu().tolist()
 
 def train(args, train_dataset, model, tokenizer):
     """ Train the model """
@@ -343,23 +317,23 @@ def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=Fal
         if "MuSiQue" in input_dir:
             processor = MusiqueProcessor()
         elif "2Wiki" in input_dir:
-            processor = _2WikiProcessor()
+            processor = WikiProcessor()
         elif "HotpotQA" in input_dir:
             processor = HotpotqaProcessor()
         else:
             raise Exception("Wrong dataset dir!")
 
-        label_list = processor.get_labels()
+        label_list = processor.get_labels(input_dir)
         if evaluate:
             examples = processor.get_dev_examples(args.data_dir, filename=args.predict_file)
         else:
             examples = processor.get_train_examples(args.data_dir, filename=args.train_file)
 
         features, dataset = convert_examples_to_features( 
-            examples,
-            label_list,
-            args.max_seq_length,
-            tokenizer,
+            examples=examples,
+            label_list=label_list,
+            max_length=args.max_seq_length,
+            tokenizer=tokenizer,
             pad_on_left=bool(args.model_type in ["xlnet"]),  # pad on the left for xlnet
             pad_token_segment_id=4 if args.model_type in ["xlnet"] else 0,
         )

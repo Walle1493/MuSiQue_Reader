@@ -52,7 +52,7 @@ def compute_f1(a_gold, a_pred):
 
 
 def main():
-    pred_path = "/home/mxdong/Model/Reader/MuSiQue/albert-xxlarge-v2/predictions_.json"
+    pred_path = "/home/mxdong/Model/Reader/MuSiQue_Title/albert-xxlarge-v2/predictions_.json"
     gold_path = "/home/mxdong/Data/MuSiQue/single_hop_title/dev.json"
     
     f = open(pred_path)

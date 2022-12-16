@@ -25,6 +25,8 @@ from typing import List
 
 import tqdm
 
+import torch
+from torch.utils.data import TensorDataset
 from transformers import PreTrainedTokenizer
 
 
@@ -34,7 +36,7 @@ logger = logging.getLogger(__name__)
 class InputExample(object):
     """A single training/test example for multiple choice"""
 
-    def __init__(self, example_id, question, contexts, endings, label=None):
+    def __init__(self, example_id, question, contexts, label=None):
         """Constructs a InputExample.
 
         Args:
@@ -48,7 +50,6 @@ class InputExample(object):
         self.example_id = example_id
         self.question = question
         self.contexts = contexts
-        self.endings = endings
         self.label = label
 
 
@@ -80,6 +81,76 @@ class DataProcessor(object):
     def get_labels(self):
         """Gets the list of labels for this data set."""
         raise NotImplementedError()
+
+
+class MusiqueProcessor(DataProcessor):
+    """Processor for the Musique data set."""
+
+    def get_train_examples(self, data_dir, filename):
+        """See base class."""
+        logger.info("LOOKING AT {} train".format(data_dir))
+        dataset = os.path.join(data_dir, filename)
+        return self._create_examples(dataset, "train")
+
+    def get_dev_examples(self, data_dir, filename):
+        """See base class."""
+        logger.info("LOOKING AT {} dev".format(data_dir))
+        dataset = os.path.join(data_dir, filename)
+        return self._create_examples(dataset, "dev")
+
+    def get_test_examples(self, data_dir, filename):
+        """See base class."""
+        logger.info("LOOKING AT {} test".format(data_dir))
+        dataset = os.path.join(data_dir, filename)
+        return self._create_examples(dataset, "test")
+
+    def get_labels(self, data_dir):
+        """See base class."""
+        file_names = os.listdir(data_dir)
+        file_name = None
+        for fn in file_names:
+            if ".json" in fn:
+                file_name = fn
+                break
+        assert file_name is not None
+        dataset = os.path.join(data_dir, file_name)
+        with open(dataset) as f:
+            dataset = json.load(f)
+        context_length = len(dataset[0]["context"])
+        # return [str(x) for x in range(context_length)]
+        return list(range(context_length))
+
+    def _create_examples(self, dataset, set_type):
+        """Creates examples for the training and dev sets."""
+        with open(dataset) as f:
+            lines = json.load(f)
+        examples = []
+        for (_, data_raw) in enumerate(lines):
+            musique_id = "%s-%s" % (set_type, data_raw["id"])
+            # article = data_raw["article"]
+            contexts = data_raw["context"]
+            truth = data_raw["label"]
+            question = data_raw["question"]
+
+            examples.append(
+                InputExample(
+                    example_id=musique_id,
+                    question=question,
+                    contexts=contexts,
+                    label=truth,
+                )
+            )
+        return examples
+
+
+class WikiProcessor(DataProcessor):
+    """Processor for the 2WikiMultiHopQA data set."""
+    pass
+
+
+class HotpotqaProcessor(DataProcessor):
+    """Processor for the Hotpotqa data set."""
+    pass
 
 
 class RaceProcessor(DataProcessor):
@@ -149,195 +220,6 @@ class RaceProcessor(DataProcessor):
         return examples
 
 
-class SwagProcessor(DataProcessor):
-    """Processor for the SWAG data set."""
-
-    def get_train_examples(self, data_dir):
-        """See base class."""
-        logger.info("LOOKING AT {} train".format(data_dir))
-        return self._create_examples(self._read_csv(os.path.join(data_dir, "train.csv")), "train")
-
-    def get_dev_examples(self, data_dir):
-        """See base class."""
-        logger.info("LOOKING AT {} dev".format(data_dir))
-        return self._create_examples(self._read_csv(os.path.join(data_dir, "val.csv")), "dev")
-
-    def get_test_examples(self, data_dir):
-        """See base class."""
-        logger.info("LOOKING AT {} dev".format(data_dir))
-        raise ValueError(
-            "For swag testing, the input file does not contain a label column. It can not be tested in current code"
-            "setting!"
-        )
-        return self._create_examples(self._read_csv(os.path.join(data_dir, "test.csv")), "test")
-
-    def get_labels(self):
-        """See base class."""
-        return ["0", "1", "2", "3"]
-
-    def _read_csv(self, input_file):
-        with open(input_file, "r", encoding="utf-8") as f:
-            return list(csv.reader(f))
-
-    def _create_examples(self, lines: List[List[str]], type: str):
-        """Creates examples for the training and dev sets."""
-        if type == "train" and lines[0][-1] != "label":
-            raise ValueError("For training, the input file must contain a label column.")
-
-        examples = [
-            InputExample(
-                example_id=line[2],
-                question=line[5],  # in the swag dataset, the
-                # common beginning of each
-                # choice is stored in "sent2".
-                contexts=[line[4], line[4], line[4], line[4]],
-                endings=[line[7], line[8], line[9], line[10]],
-                label=line[11],
-            )
-            for line in lines[1:]  # we skip the line with the column names
-        ]
-
-        return examples
-
-
-class ArcProcessor(DataProcessor):
-    """Processor for the ARC data set (request from allennlp)."""
-
-    def get_train_examples(self, data_dir):
-        """See base class."""
-        logger.info("LOOKING AT {} train".format(data_dir))
-        return self._create_examples(self._read_json(os.path.join(data_dir, "train.jsonl")), "train")
-
-    def get_dev_examples(self, data_dir):
-        """See base class."""
-        logger.info("LOOKING AT {} dev".format(data_dir))
-        return self._create_examples(self._read_json(os.path.join(data_dir, "dev.jsonl")), "dev")
-
-    def get_test_examples(self, data_dir):
-        logger.info("LOOKING AT {} test".format(data_dir))
-        return self._create_examples(self._read_json(os.path.join(data_dir, "test.jsonl")), "test")
-
-    def get_labels(self):
-        """See base class."""
-        return ["0", "1", "2", "3"]
-
-    def _read_json(self, input_file):
-        with open(input_file, "r", encoding="utf-8") as fin:
-            lines = fin.readlines()
-            return lines
-
-    def _create_examples(self, lines, type):
-        """Creates examples for the training and dev sets."""
-
-        # There are two types of labels. They should be normalized
-        def normalize(truth):
-            if truth in "ABCD":
-                return ord(truth) - ord("A")
-            elif truth in "1234":
-                return int(truth) - 1
-            else:
-                logger.info("truth ERROR! %s", str(truth))
-                return None
-
-        examples = []
-        three_choice = 0
-        four_choice = 0
-        five_choice = 0
-        other_choices = 0
-        # we deleted example which has more than or less than four choices
-        for line in tqdm.tqdm(lines, desc="read arc data"):
-            data_raw = json.loads(line.strip("\n"))
-            if len(data_raw["question"]["choices"]) == 3:
-                three_choice += 1
-                continue
-            elif len(data_raw["question"]["choices"]) == 5:
-                five_choice += 1
-                continue
-            elif len(data_raw["question"]["choices"]) != 4:
-                other_choices += 1
-                continue
-            four_choice += 1
-            truth = str(normalize(data_raw["answerKey"]))
-            assert truth != "None"
-            question_choices = data_raw["question"]
-            question = question_choices["stem"]
-            id = data_raw["id"]
-            options = question_choices["choices"]
-            if len(options) == 4:
-                examples.append(
-                    InputExample(
-                        example_id=id,
-                        question=question,
-                        contexts=[
-                            options[0]["para"].replace("_", ""),
-                            options[1]["para"].replace("_", ""),
-                            options[2]["para"].replace("_", ""),
-                            options[3]["para"].replace("_", ""),
-                        ],
-                        endings=[options[0]["text"], options[1]["text"], options[2]["text"], options[3]["text"]],
-                        label=truth,
-                    )
-                )
-
-        if type == "train":
-            assert len(examples) > 1
-            assert examples[0].label is not None
-        logger.info("len examples: %s}", str(len(examples)))
-        logger.info("Three choices: %s", str(three_choice))
-        logger.info("Five choices: %s", str(five_choice))
-        logger.info("Other choices: %s", str(other_choices))
-        logger.info("four choices: %s", str(four_choice))
-
-        return examples
-
-
-class ReclorProcessor(DataProcessor):
-    """Processor for the ReClor data set."""
-
-    def get_train_examples(self, data_dir):
-        """See base class."""
-        logger.info("LOOKING AT {} train".format(data_dir))
-        return self._create_examples(self._read_json(os.path.join(data_dir, "train.json")), "train")
-
-    def get_dev_examples(self, data_dir):
-        """See base class."""
-        logger.info("LOOKING AT {} dev".format(data_dir))
-        return self._create_examples(self._read_json(os.path.join(data_dir, "val.json")), "dev")
-
-    def get_test_examples(self, data_dir):
-        logger.info("LOOKING AT {} test".format(data_dir))
-        return self._create_examples(self._read_json(os.path.join(data_dir, "test.json")), "test")
-
-    def get_labels(self):
-        """See base class."""
-        return [0, 1, 2, 3]
-
-    def _read_json(self, input_file):
-        with open(input_file, "r") as f:
-            lines = json.load(f)
-        return lines
-
-    def _create_examples(self, lines, type):
-        """Creates examples for the training and dev sets."""
-        examples = []
-        for d in lines:
-            context = d['context']
-            question = d['question']
-            answers = d['answers']
-            label = 0 if type == "test" else d['label'] # for test set, there is no label. Just use 0 for convenience.
-            id_string = d['id_string']
-            examples.append(
-                InputExample(
-                    example_id = id_string,
-                    question = question,
-                    contexts=[context, context, context, context],  # this is not efficient but convenient
-                    endings=[answers[0], answers[1], answers[2], answers[3]],
-                    label = label
-                    )
-                )  
-        return examples
-
-
 def convert_examples_to_features(
     examples: List[InputExample],
     label_list: List[str],
@@ -352,20 +234,16 @@ def convert_examples_to_features(
     Loads a data file into a list of `InputFeatures`
     """
 
-    label_map = {label: i for i, label in enumerate(label_list)}
+    # label_map = {label: i for i, label in enumerate(label_list)}
 
     features = []
     for (ex_index, example) in tqdm.tqdm(enumerate(examples), desc="convert examples to features"):
         if ex_index % 10000 == 0:
             logger.info("Writing example %d of %d" % (ex_index, len(examples)))
         choices_features = []
-        for ending_idx, (context, ending) in enumerate(zip(example.contexts, example.endings)):
-            text_a = context
-            if example.question.find("_") != -1:
-                # this is for cloze question
-                text_b = example.question.replace("_", ending)
-            else:
-                text_b = example.question + " " + ending
+        for _, context in enumerate(example.contexts):
+            text_a = example.question
+            text_b = context
     
             inputs = tokenizer.encode_plus(text_a, text_b, add_special_tokens=True, max_length=max_length,)
             if "num_truncated_tokens" in inputs and inputs["num_truncated_tokens"] > 0:
@@ -397,13 +275,14 @@ def convert_examples_to_features(
             assert len(token_type_ids) == max_length
             choices_features.append((input_ids, attention_mask, token_type_ids))
 
-        label = label_map[example.label]
+        # label = label_map[example.label]
+        label = example.label
 
         if ex_index < 2:
             logger.info("*** Example ***")
-            logger.info("race_id: {}".format(example.example_id))
-            for choice_idx, (input_ids, attention_mask, token_type_ids) in enumerate(choices_features):
-                logger.info("choice: {}".format(choice_idx))
+            logger.info("example_id: {}".format(example.example_id))
+            for context_idx, (input_ids, attention_mask, token_type_ids) in enumerate(choices_features):
+                logger.info("context_index: {}".format(context_idx))
                 logger.info("input_ids: {}".format(" ".join(map(str, input_ids))))
                 logger.info("attention_mask: {}".format(" ".join(map(str, attention_mask))))
                 logger.info("token_type_ids: {}".format(" ".join(map(str, token_type_ids))))
@@ -411,10 +290,12 @@ def convert_examples_to_features(
 
         features.append(InputFeatures(example_id=example.example_id, choices_features=choices_features, label=label,))
 
-    return features
+    # Convert to Tensors and build dataset
+    all_input_ids = torch.tensor([[f["input_ids"] for f in feature.choices_features] for feature in features], dtype=torch.long)
+    all_attention_masks = torch.tensor([[f["input_mask"] for f in feature.choices_features] for feature in features], dtype=torch.long)
+    all_token_type_ids = torch.tensor([[f["segment_ids"] for f in feature.choices_features] for feature in features], dtype=torch.long)
+    all_label_ids = torch.tensor([feature.label for feature in features], dtype=torch.long)
 
+    dataset = TensorDataset(all_input_ids, all_attention_masks, all_token_type_ids, all_label_ids)
 
-processors = {"race": RaceProcessor, "swag": SwagProcessor, "arc": ArcProcessor, "reclor": ReclorProcessor}
-
-
-MULTIPLE_CHOICE_TASKS_NUM_LABELS = {"race": 4, "swag": 4, "arc": 4, "reclor": 4}
+    return features, dataset

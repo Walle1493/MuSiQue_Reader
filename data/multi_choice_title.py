@@ -1,9 +1,10 @@
 import sys
 import os
 import json
+import random
 
 
-def create_simgle_hop_dataset(src_path, dest_path):
+def create_multi_choice_dataset(src_path, dest_path, neg_num=3):
     new = []
     
     with open(src_path) as f:
@@ -12,21 +13,31 @@ def create_simgle_hop_dataset(src_path, dest_path):
     for data in dataset:
         _id = data["id"]
         paragraphs = data["paragraphs"]
-        # question = data["question"]
         decompositions = data["question_decomposition"]
-        # answer = data["answer"]
-        # answer_aliases = data["answer_aliases"]
-        # answerable = data["answerable"]
 
         for i, decomposition in enumerate(decompositions):
             curr = {}
             question = decomposition["question"]
-            answer = decomposition["answer"]
-            sup_idx = decomposition["paragraph_support_idx"]
+
+            # positive index
+            pos_idx = decomposition["paragraph_support_idx"]
+            # negative indices
+            neg_idxs = list(range(len(paragraphs)))
+            neg_idxs.remove(pos_idx)
+            random.shuffle(neg_idxs)
+            neg_idxs = neg_idxs[:neg_num]
 
             curr["id"] = _id + "_" + str(i+1)
-            curr["title"] = paragraphs[sup_idx]["title"]
-            curr["context"] = curr["title"] + ". " + paragraphs[sup_idx]["paragraph_text"]
+            
+            # positive label
+            curr["label"] = random.randint(0, neg_num)
+            curr["context"] = []
+            for i in range(neg_num + 1):
+                if i == curr["label"]:
+                    para = paragraphs[pos_idx]
+                else:
+                    para = paragraphs[neg_idxs.pop(0)]
+                curr["context"].append(para["title"] + ". " + para["paragraph_text"])
 
             # question: #x -> ANS
             if "#" in question:
@@ -38,10 +49,6 @@ def create_simgle_hop_dataset(src_path, dest_path):
                     question = question.replace("#3", decompositions[2]["answer"])
 
             curr["question"] = question
-            curr["answer"] = answer
-
-            # start
-            curr["start"] = curr["context"].index(answer, len(curr["title"]))
 
             new.append(curr)
 
@@ -52,12 +59,13 @@ def create_simgle_hop_dataset(src_path, dest_path):
 if __name__ == "__main__":
 
     mode = sys.argv[1]  # train or dev
+    # neg_num = sys.argv[2]   # 3
 
     src_path = "/home/mxdong/Data/MuSiQue/format_data"
-    dest_path = "/home/mxdong/Data/MuSiQue/single_hop_title"
+    dest_path = "/home/mxdong/Data/MuSiQue/multi_choice_title"
     if not os.path.exists(dest_path):
         os.mkdir(dest_path)
     src_path = os.path.join(src_path, mode + ".json")
     dest_path = os.path.join(dest_path, mode + ".json")
     
-    create_simgle_hop_dataset(src_path, dest_path)
+    create_multi_choice_dataset(src_path, dest_path)
