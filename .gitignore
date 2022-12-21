@@ -1,1 +1,5 @@
 reader/runs
+selector/runs
+pipeline/logs
+reader/logs
+selector/logs

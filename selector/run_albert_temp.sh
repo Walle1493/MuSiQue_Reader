@@ -1,14 +1,14 @@
-# export DATA_DIR=/home/mxdong/Data/MuSiQue/single_hop_short
-# export DATA_DIR=/home/mxdong/Data/MuSiQue/single_hop_data
-export DATA_DIR=/home/mxdong/Data/MuSiQue/single_hop_title
+# export DATA_DIR=/home/mxdong/Data/MuSiQue/multi_choice_short
+export DATA_DIR=/home/mxdong/Data/MuSiQue/multi_choice_data
+# export DATA_DIR=/home/mxdong/Data/MuSiQue/multi_choice_title
 
-# export TASK_NAME=MuSiQue
-export TASK_NAME=MuSiQue_Title
+export TASK_NAME=MuSiQue
+# export TASK_NAME=MuSiQue_Title
 export MODEL_NAME=albert-xxlarge-v2
-export OUTPUT_DIR=/home/mxdong/Model/Reader/${TASK_NAME}/${MODEL_NAME}
+export OUTPUT_DIR=/home/mxdong/Model/Selector/${TASK_NAME}/${MODEL_NAME}
 
 
-# Albert-xxLarge
+# Bert-Base
 CUDA_VISIBLE_DEVICES=2 python run_musique.py \
     --model_type albert \
     --model_name_or_path ${MODEL_NAME} \
@@ -20,15 +20,15 @@ CUDA_VISIBLE_DEVICES=2 python run_musique.py \
     --train_file train.json \
     --predict_file dev.json \
     --max_seq_length 512 \
-    --doc_stride 256 \
     --max_query_length 32 \
-    --per_gpu_train_batch_size 4   \
-    --per_gpu_eval_batch_size 4   \
+    --per_gpu_train_batch_size 1   \
+    --per_gpu_eval_batch_size 1   \
     --gradient_accumulation_steps 1 \
     --learning_rate 1e-5 \
     --num_train_epochs 3.0 \
-    --logging_steps 4000 \
-    --save_steps 4000 \
+    --logging_steps 16000 \
+    --save_steps 32000 \
     --adam_epsilon 1e-8 \
     --warmup_steps 300 \
     --overwrite_output_dir \
+    --evaluate_during_training \
