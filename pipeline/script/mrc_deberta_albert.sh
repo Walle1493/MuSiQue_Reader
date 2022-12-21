@@ -7,12 +7,13 @@ export RENAME=DEBERTA_AND_ALBERT
 export OUTPUT_DIR=/home/mxdong/Model/Pipeline/${RENAME}
 
 
-# DebertaV3-Large
+# DebertaV3-Large & Albert-xxLarge
 CUDA_VISIBLE_DEVICES=0 python ../mrc.py \
     --retriever_type deberta \
     --retriever_name_or_path ${RETRIEVER_NAME} \
     --reader_type albert \
     --reader_name_or_path ${READER_NAME} \
+    --do_lower_case \
     --data_dir ${DATA_DIR} \
     --file_name dev.json \
     --output_dir ${OUTPUT_DIR} \

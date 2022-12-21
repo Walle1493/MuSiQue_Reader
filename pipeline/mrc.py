@@ -108,7 +108,7 @@ def sup_score(prediction, gold):
     return f1, em
 
 
-def evaluate(args, retriever, reader, retriever_tokenizer, reader_tokenizer, prefix=""):
+def evaluate(args, retriever, reader, retriever_tokenizer, reader_tokenizer):
     file_path = os.path.join(args.data_dir, args.file_name)
     with open(file_path) as f:
         dataset = json.load(f)
