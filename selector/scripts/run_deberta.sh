@@ -1,15 +1,14 @@
 # export DATA_DIR=/home/mxdong/Data/MuSiQue/multi_choice_short
-export DATA_DIR=/home/mxdong/Data/MuSiQue/multi_choice_data
-# export DATA_DIR=/home/mxdong/Data/MuSiQue/multi_choice_title
+export DATA_DIR=/home/mxdong/Data/MuSiQue/multi_choice_title
 
-export TASK_NAME=MuSiQue
-# export TASK_NAME=MuSiQue_Title
+# export TASK_NAME=MuSiQue
+export TASK_NAME=MuSiQue_Title
 export MODEL_NAME=microsoft/deberta-v3-large
 export OUTPUT_DIR=/home/mxdong/Model/Selector/${TASK_NAME}/${MODEL_NAME}
 
 
 # Bert-Base
-CUDA_VISIBLE_DEVICES=0 python run_musique.py \
+CUDA_VISIBLE_DEVICES=2 python ../run_musique.py \
     --model_type deberta \
     --model_name_or_path ${MODEL_NAME} \
     --do_train \

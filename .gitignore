@@ -1,5 +1,6 @@
 reader/runs
 selector/runs
 pipeline/logs
+multi_step/logs
 reader/logs
 selector/logs

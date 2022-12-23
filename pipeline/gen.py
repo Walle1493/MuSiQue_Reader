@@ -76,13 +76,13 @@ def generate(args):
                 attention_mask=features['attention_mask'],
                 max_length=args.max_tgt_len)
         # TODO: fix id=2537 ("�") bug
-        res = tokenizer.decode(output[0], skip_special_tokens=True).strip()
-        enc = tokenizer.encode(res)
-        if 2537 in enc:
-            enc.remove(2537)
-        res = tokenizer.decode(enc, skip_special_tokens=True).strip()
+        # res = tokenizer.decode(output[0], skip_special_tokens=True).strip()
+        # enc = tokenizer.encode(res)
+        # if 2537 in enc:
+        #     enc.remove(2537)
+        # res = tokenizer.decode(enc, skip_special_tokens=True).strip()
         
-        return res
+        return tokenizer.decode(output[0], skip_special_tokens=True).strip()
 
     with open(args.src_path) as f:
         dataset = json.load(f)
