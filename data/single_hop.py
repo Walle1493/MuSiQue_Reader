@@ -4,7 +4,7 @@ import json
 import pdb
 
 
-def create_simgle_hop_dataset(src_path, dest_path):
+def create_single_hop_dataset(src_path, dest_path):
     new = []
     
     with open(src_path) as f:
@@ -63,4 +63,4 @@ if __name__ == "__main__":
     src_path = os.path.join(src_path, mode + ".json")
     dest_path = os.path.join(dest_path, mode + ".json")
     
-    create_simgle_hop_dataset(src_path, dest_path)
+    create_single_hop_dataset(src_path, dest_path)
